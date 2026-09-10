@@ -1,0 +1,33 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      FLASK_ENV: production
+      SECRET_KEY: local-compose-change-me
+      DATABASE_URL: postgresql+psycopg://matchflow:matchflow@db:5432/matchflow
+      SESSION_COOKIE_SECURE: "0"
+      TRUST_PROXY: "0"
+      RATELIMIT_STORAGE_URI: memory://
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "flask --app wsgi:app bootstrap-db && flask --app wsgi:app seed-assessments && gunicorn --workers 3 --threads 2 --timeout 60 --bind 0.0.0.0:8000 wsgi:app"
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: matchflow
+      POSTGRES_USER: matchflow
+      POSTGRES_PASSWORD: matchflow
+    volumes:
+      - matchflow_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U matchflow -d matchflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  matchflow_pg:
