@@ -36,11 +36,13 @@ This repository is a production-oriented foundation, but it is not a claim that 
 
 ## 1. Local setup — Windows
 
+This project runs cleanly on Python 3.13. The default local configuration uses SQLite and in-memory rate limiting, so no Redis or PostgreSQL is required for a basic local run.
+
 ```powershell
-py -3.12 -m venv .venv
+py -3.13 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements.txt
 copy .env.example .env
 flask --app wsgi:app bootstrap-db
 flask --app wsgi:app seed-assessments

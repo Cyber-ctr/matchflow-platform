@@ -5,14 +5,31 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _sqlite_uri():
+    return f"sqlite:///{BASE_DIR / 'matchflow.db'}"
+
+
 def database_uri():
     url = os.getenv('DATABASE_URL', '').strip()
+    while url.lower().startswith('database_url='):
+        url = url.split('=', 1)[1].strip()
     if not url:
-        return f"sqlite:///{BASE_DIR / 'matchflow.db'}"
+        return _sqlite_uri()
+
     if url.startswith('postgres://'):
         url = url.replace('postgres://', 'postgresql+psycopg://', 1)
     elif url.startswith('postgresql://'):
         url = url.replace('postgresql://', 'postgresql+psycopg://', 1)
+
+    if not url.startswith(('postgresql+psycopg://', 'postgresql://', 'sqlite://')):
+        return _sqlite_uri()
+
+    if url.startswith('postgresql+psycopg://'):
+        try:
+            import psycopg  # noqa: F401
+        except ImportError:
+            return _sqlite_uri()
+
     return url
 
 
