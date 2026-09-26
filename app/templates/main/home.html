@@ -1,5 +1,37 @@
-{% extends 'base.html' %}{% block title %}Find junior talent. Build stronger teams{% endblock %}{% block content %}
-<section class="hero"><div class="container hero-grid"><div class="hero-copy"><div class="eyebrow">TALENT · APPRENTICESHIPS · SME HIRING</div><h1>Find the right people. <span>Grow faster.</span></h1><p class="lead">MatchFlow connects Cameroonian SMEs with verified junior developers, designers and bookkeepers—then helps both sides turn opportunities into real work experience.</p><div class="hero-actions"><a class="button" href="{{ url_for('main.jobs') }}">Explore opportunities</a><a class="button button-outline" href="{{ url_for('auth.register') }}">Create your MatchFlow profile</a></div><div class="trust-row"><span>✓ Skills-first matching</span><span>✓ Apprenticeship ready</span><span>✓ Mobile-first PWA</span></div></div><div class="hero-card"><div class="hero-card-top"><span class="status-dot"></span> MatchFlow live marketplace</div><div class="match-card"><div class="avatar avatar-blue">JS</div><div><strong>Junior Frontend Developer</strong><small>Douala · Hybrid · Apprenticeship</small><span class="match-pill">94% match</span></div></div><div class="match-card"><div class="avatar avatar-green">GD</div><div><strong>Graphic Designer</strong><small>Yaoundé · Freelance · Part-time</small><span class="match-pill green">89% match</span></div></div><div class="match-card"><div class="avatar avatar-gold">BK</div><div><strong>Bookkeeping Assistant</strong><small>Buea · On-site · Junior role</small><span class="match-pill gold">86% match</span></div></div></div></div></section>
+{% extends 'base.html' %}
+{% block title %}Find junior talent. Build stronger teams
+{% endblock %}
+{% block content %}
+<section class="hero"><div class="container hero-grid"><div class="hero-copy"><div class="eyebrow">TALENT · APPRENTICESHIPS · SME HIRING</div>
+    <h1>Find the right people.
+         <span>Grow faster.</span>
+        </h1>
+        <p class="lead">MatchFlow connects Cameroonian SMEs with verified junior developers, designers and bookkeepers—then helps both sides turn opportunities into real work experience.</p>
+        <div class="hero-actions">
+            <a class="button" href="{{ url_for('main.jobs') }}">Explore opportunities</a>
+            <a class="button button-outline" href="{{ url_for('auth.register') }}">Create your MatchFlow profile</a></div>
+            <div class="trust-row"><span>✓ Skills-first matching</span>
+                <span>✓ Apprenticeship ready</span>
+                <span>✓ Mobile-first PWA</span>
+            </div>
+        </div>
+        <div class="hero-card">
+            <div class="hero-card-top">
+                <span class="status-dot">
+                                    </span> MatchFlow live marketplace
+                                </div>
+                                <div class="match-card">
+                                    <div class="avatar avatar-blue">JS
+                                    </div>
+                                    <div><strong>Junior Frontend Developer</strong>
+                                        <small>Douala · Hybrid · Apprenticeship</small>
+                                        <span class="match-pill">94% match</span>
+                                    </div>
+                                </div>
+                                <div class="match-card">
+                                    <div class="avatar avatar-green">GD</div>
+                                    <div><strong>Graphic Designer</strong>
+                                        <small>Yaoundé · Freelance · Part-time</small><span class="match-pill green">89% match</span></div></div><div class="match-card"><div class="avatar avatar-gold">BK</div><div><strong>Bookkeeping Assistant</strong><small>Buea · On-site · Junior role</small><span class="match-pill gold">86% match</span></div></div></div></div></section>
 <section class="section"><div class="container"><div class="section-heading"><div><p class="kicker">WHY MATCHFLOW</p><h2>Built around the real gap.</h2></div><p>Graduates need experience. SMEs need affordable, capable talent. MatchFlow creates a trusted bridge between the two.</p></div><div class="feature-grid"><article><div class="feature-icon">↔</div><h3>Better matching</h3><p>Compare skills, availability, location and work preferences before you apply or shortlist.</p></article><article><div class="feature-icon">✓</div><h3>Verified talent</h3><p>Profiles can build trust through practical assessments, portfolio evidence, references and employer feedback.</p></article><article><div class="feature-icon">↗</div><h3>Apprenticeship pipeline</h3><p>Start with structured apprenticeship opportunities and grow successful juniors into freelancers or employees.</p></article></div></div></section>
 <section class="section section-muted"><div class="container"><div class="section-heading"><div><p class="kicker">LATEST OPPORTUNITIES</p><h2>Start where the work is.</h2></div><a href="{{ url_for('main.jobs') }}" class="text-link">View all →</a></div><div class="job-grid">{% for job in featured %}<a class="job-card" href="{{ url_for('main.job_detail', job_id=job.id) }}"><div class="job-top"><span class="category-tag">{{ job.category }}</span><span>{{ job.engagement_type }}</span></div><h3>{{ job.title }}</h3><p>{{ job.employer.business_name }} · {{ job.city or 'Cameroon' }}</p><div class="job-bottom"><span>{{ job.work_type }}</span><strong>{{ job.salary_min|money if job.salary_min else 'Pay negotiable' }}</strong></div></a>{else}<div class="empty-state"><h3>No opportunities yet</h3><p>Employer listings will appear here once MatchFlow is seeded with live opportunities.</p></div>{% endfor %}</div></div></section>
 <section class="cta"><div class="container cta-inner"><div><p class="kicker">READY TO BUILD THE NETWORK?</p><h2>Join the first wave of MatchFlow users.</h2><p>Start with a profile today and become part of a skills-first hiring community.</p></div><a class="button button-light" href="{{ url_for('auth.register') }}">Get started</a></div></section>

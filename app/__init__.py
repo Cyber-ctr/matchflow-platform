@@ -1,7 +1,5 @@
 import os
 from datetime import datetime
-from pathlib import Path
-
 from dotenv import load_dotenv
 from flask import Flask, flash, redirect, url_for
 from flask_login import current_user
@@ -17,7 +15,6 @@ from .models import Notification, User
 def create_app(config_object=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config_object or Config)
-    app.config.setdefault('UPLOAD_FOLDER', str(Path(app.root_path).parent / 'instance' / 'uploads'))
     if os.getenv('FLASK_ENV') == 'production' and app.config['SECRET_KEY'] == 'change-me-in-production':
         raise RuntimeError('SECRET_KEY must be set to a strong secret in production.')
     from .cli import register_commands
