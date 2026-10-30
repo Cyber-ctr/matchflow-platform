@@ -28,6 +28,6 @@ def send_email(to_address, subject, body):
                 server.login(username, password)
             server.send_message(message)
         return True
-    except (OSError, smtplib.SMTPException) as exc:
-        logger.exception('SMTP delivery failed: %s', exc)
+    except (OSError, smtplib.SMTPException):
+        logger.exception('SMTP delivery failed')
         return False

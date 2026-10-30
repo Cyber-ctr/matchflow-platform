@@ -1,1 +1,69 @@
-{% extends 'base.html' %}{% block title %}My talent profile{% endblock %}{% block content %}<section class="page-hero"><div class="container"><p class="kicker">TALENT PROFILE</p><h1>Show employers what you can do.</h1><p>Your profile powers matching and verification.</p></div></section><section class="section"><div class="container form-shell"><form method="post" class="form-stack card"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="two-col"><label>Full name<input name="full_name" required value="{{ talent.full_name }}"></label><label>Headline<input name="headline" value="{{ talent.headline or '' }}" placeholder="Junior Frontend Developer"></label></div><div class="two-col"><label>Phone<input name="phone" value="{{ talent.phone or '' }}"></label><label>City<input name="city" value="{{ talent.city or '' }}"></label></div><label>Bio<textarea name="bio" rows="5" placeholder="Tell employers what makes you valuable.">{{ talent.bio or '' }}</textarea></label><div class="two-col"><label>Education<input name="education" value="{{ talent.education or '' }}"></label><label>Experience<select name="experience_level"><option {% if talent.experience_level == 'Junior' %}selected{% endif %}>Junior</option><option {% if talent.experience_level == 'Intermediate' %}selected{% endif %}>Intermediate</option><option {% if talent.experience_level == 'Senior' %}selected{% endif %}>Senior</option></select></label></div><div class="two-col"><label>Availability<select name="availability"><option {% if talent.availability == "Available" %}selected{% endif %}>Available</option><option {% if talent.availability == "Part-time" %}selected{% endif %}>Part-time</option><option {% if talent.availability == "Unavailable" %}selected{% endif %}>Unavailable</option></select></label><label>Expected rate (FCFA)<input type="number" name="expected_rate" value="{{ talent.expected_rate or '' }}"></label></div><div class="two-col"><label>Portfolio URL<input type="url" name="portfolio_url" value="{{ talent.portfolio_url or '' }}"></label><label>GitHub URL<input type="url" name="github_url" value="{{ talent.github_url or '' }}"></label></div><label>LinkedIn URL<input type="url" name="linkedin_url" value="{{ talent.linkedin_url or '' }}"></label><fieldset><legend>Your skills</legend><div class="skill-checks">{% for skill in skills %}<label class="checkbox"><input type="checkbox" name="skills" value="{{ skill.id }}" {% if skill in talent.skills %}checked{% endif %}> {{ skill.name }}</label>{% endfor %}</div></fieldset><button class="button">Save profile</button></form><div class="card" style="margin-top:15px"><h3>CV</h3><p class="muted">Upload a PDF, DOC or DOCX up to 5 MB. Employers can only access a CV when viewing a talent profile.</p>{% if talent.cv_filename %}<p><a class="text-link" href="{{ url_for('cv.download_self') }}">Download your current CV →</a></p>{% endif %}<form method="post" action="{{ url_for('cv.upload') }}" enctype="multipart/form-data" class="form-stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="file" name="cv" accept=".pdf,.doc,.docx" required><button class="button button-outline">Upload CV</button></form></div></div></section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}My talent profile{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <p class="kicker">TALENT PROFILE</p>
+    <h1>Show employers what you can do.</h1>
+    <p>Your profile powers matching and verification.</p>
+  </div>
+</section>
+<section class="section">
+  <div class="container form-shell">
+    <form method="post" class="form-stack card">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="two-col">
+        <label>Full name<input name="full_name" required value="{{ talent.full_name }}"></label>
+        <label>Headline<input name="headline" value="{{ talent.headline or '' }}" placeholder="Junior Frontend Developer"></label>
+      </div>
+      <div class="two-col">
+        <label>Phone<input name="phone" value="{{ talent.phone or '' }}"></label>
+        <label>City<input name="city" value="{{ talent.city or '' }}"></label>
+      </div>
+      <label>Bio<textarea name="bio" rows="5" placeholder="Tell employers what makes you valuable.">{{ talent.bio or '' }}</textarea></label>
+      <div class="two-col">
+        <label>Education<input name="education" value="{{ talent.education or '' }}"></label>
+        <label>Experience<select name="experience_level"><option {% if talent.experience_level == 'Junior' %}selected{% endif %}>Junior</option><option {% if talent.experience_level == 'Intermediate' %}selected{% endif %}>Intermediate</option><option {% if talent.experience_level == 'Senior' %}selected{% endif %}>Senior</option></select></label>
+      </div>
+      <div class="two-col">
+        <label>Availability<select name="availability"><option {% if talent.availability == "Available" %}selected{% endif %}>Available</option><option {% if talent.availability == "Part-time" %}selected{% endif %}>Part-time</option><option {% if talent.availability == "Unavailable" %}selected{% endif %}>Unavailable</option></select></label>
+        <label>Expected rate (FCFA)<input type="number" name="expected_rate" value="{{ talent.expected_rate or '' }}"></label>
+      </div>
+      <div class="two-col">
+        <label>Portfolio URL<input type="url" name="portfolio_url" value="{{ talent.portfolio_url or '' }}"></label>
+        <label>GitHub URL<input type="url" name="github_url" value="{{ talent.github_url or '' }}"></label>
+      </div>
+      <label>LinkedIn URL<input type="url" name="linkedin_url" value="{{ talent.linkedin_url or '' }}"></label>
+      <fieldset>
+        <legend>Your skills</legend>
+        <div class="skill-checks">
+          {% for skill in skills %}
+          <label class="checkbox"><input type="checkbox" name="skills" value="{{ skill.id }}" {% if skill in talent.skills %}checked{% endif %}> {{ skill.name }}</label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <button class="button">Save profile</button>
+    </form>
+    <div class="card" style="margin-top:15px">
+      <h3>Profile photo</h3>
+      {% if talent.avatar_filename %}<img src="{{ url_for('cv.download_avatar', user_id=current_user.id) }}" alt="Your profile photo" width="96" height="96">{% endif %}
+      <p class="muted">JPG, PNG or WEBP. Maximum upload size is 5 MB.</p>
+      <form method="post" action="{{ url_for('cv.upload_avatar') }}" enctype="multipart/form-data" class="form-stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="file" name="avatar" accept=".jpg,.jpeg,.png,.webp" required>
+        <button class="button button-outline">Upload photo</button>
+      </form>
+    </div>
+    <div class="card" style="margin-top:15px">
+      <h3>CV</h3>
+      <p class="muted">Upload a PDF, DOC or DOCX up to 5 MB. Employers can only access a CV when viewing a talent profile.</p>
+      {% if talent.cv_filename %}<p><a class="text-link" href="{{ url_for('cv.download_self') }}">Download your current CV →</a></p>{% endif %}
+      <form method="post" action="{{ url_for('cv.upload') }}" enctype="multipart/form-data" class="form-stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="file" name="cv" accept=".pdf,.doc,.docx" required>
+        <button class="button button-outline">Upload CV</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

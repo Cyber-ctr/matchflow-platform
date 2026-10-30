@@ -10,6 +10,14 @@ services:
       SESSION_COOKIE_SECURE: "0"
       TRUST_PROXY: "0"
       RATELIMIT_STORAGE_URI: memory://
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-}
+      OBJECT_STORAGE_ENDPOINT_URL: ${OBJECT_STORAGE_ENDPOINT_URL:-}
+      OBJECT_STORAGE_REGION: ${OBJECT_STORAGE_REGION:-auto}
+      OBJECT_STORAGE_PREFIX: ${OBJECT_STORAGE_PREFIX:-matchflow}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
     depends_on:
       db:
         condition: service_healthy
@@ -29,5 +37,33 @@ services:
       timeout: 5s
       retries: 20
 
+  db-backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: matchflow
+      PGUSER: matchflow
+      PGPASSWORD: matchflow
+      BACKUP_DIR: /backups
+      BACKUP_RETENTION_DAYS: 30
+    volumes:
+      - matchflow_backups:/backups
+      - ./scripts:/scripts:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >-
+      sh -c 'set -e; while true; do
+      sh /scripts/postgres-backup.sh backup;
+      if [ "$$(date -u +%u)" = "7" ]; then
+      archive="$$(ls -1t /backups/matchflow-*.dump | head -n 1)";
+      sh /scripts/postgres-backup.sh restore-test "$$archive";
+      fi;
+      sleep 86400;
+      done'
+
 volumes:
   matchflow_pg:
+  matchflow_backups:

@@ -40,3 +40,10 @@ class Config:
     APP_NAME = 'MatchFlow'
     CONTACT_EMAIL = os.getenv('CONTACT_EMAIL', 'hello@matchflow.cm')
     UPLOAD_FOLDER = str(BASE_DIR / 'instance' / 'uploads')
+    OBJECT_STORAGE_BUCKET = os.getenv('OBJECT_STORAGE_BUCKET', '')
+    OBJECT_STORAGE_ENDPOINT_URL = os.getenv('OBJECT_STORAGE_ENDPOINT_URL', '')
+    OBJECT_STORAGE_REGION = os.getenv('OBJECT_STORAGE_REGION', 'auto')
+    OBJECT_STORAGE_PREFIX = os.getenv('OBJECT_STORAGE_PREFIX', 'matchflow')
+    SENTRY_DSN = os.getenv('SENTRY_DSN', '')
+    SENTRY_TRACES_SAMPLE_RATE = float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '0'))
+    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')

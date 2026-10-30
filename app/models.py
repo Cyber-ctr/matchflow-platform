@@ -95,6 +95,7 @@ class TalentProfile(TimestampMixin, db.Model):
     github_url = db.Column(db.String(500))
     linkedin_url = db.Column(db.String(500))
     cv_filename = db.Column(db.String(255))
+    avatar_filename = db.Column(db.String(255))
     verification_status = db.Column(db.String(30), default='unverified', index=True)
     trust_score = db.Column(db.Integer, default=0)
     headline = db.Column(db.String(180))
@@ -297,3 +298,20 @@ class AuditLog(TimestampMixin, db.Model):
     entity_type = db.Column(db.String(80))
     entity_id = db.Column(db.String(80))
     metadata_json = db.Column(db.Text)
+
+
+class ModerationReport(TimestampMixin, db.Model):
+    __tablename__ = 'moderation_reports'
+    id = db.Column(db.Integer, primary_key=True)
+    reporter_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    target_type = db.Column(db.String(20), nullable=False, index=True)
+    target_id = db.Column(db.Integer, nullable=False, index=True)
+    reason = db.Column(db.String(40), nullable=False)
+    details = db.Column(db.String(1000))
+    status = db.Column(db.String(20), nullable=False, default='open', index=True)
+    reviewed_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    reviewed_at = db.Column(db.DateTime)
+    review_notes = db.Column(db.String(2000))
+
+    reporter = db.relationship('User', foreign_keys=[reporter_id])
+    reviewer = db.relationship('User', foreign_keys=[reviewed_by_id])

@@ -93,12 +93,12 @@ def register():
     from flask import current_app
     verify_url = url_for('verify.verify', token=build_token(user.email), _external=True)
     if send_email(user.email, 'Verify your MatchFlow email', f'Verify your MatchFlow account within 24 hours:\n\n{verify_url}'):
-        current_app.logger.info('Verification email sent to %s', user.email)
+        current_app.logger.info('Verification email sent')
     else:
         if current_app.config.get('TESTING') or current_app.debug:
-            current_app.logger.info('SMTP is not configured. Verification link for %s: %s', user.email, verify_url)
+            current_app.logger.info('SMTP is not configured; verification email was not sent')
         else:
-            current_app.logger.warning('Verification email could not be delivered to %s.', user.email)
+            current_app.logger.warning('Verification email could not be delivered')
     login_user(user)
     flash('Welcome to MatchFlow. Complete your profile to start matching.', 'success')
     return redirect(url_for('dashboard'))

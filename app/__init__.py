@@ -1,26 +1,32 @@
 import os
+import time
 from datetime import datetime
 from dotenv import load_dotenv
-from flask import Flask, flash, redirect, url_for
+from flask import Flask, flash, g, redirect, url_for
 from flask_login import current_user
 from werkzeug.middleware.proxy_fix import ProxyFix
+from uuid import uuid4
 
 load_dotenv(override=False)
 
 from .config import Config
 from .extensions import csrf, db, limiter, login_manager, migrate
 from .models import Notification, User
+from .services.observability import configure_observability
 
 
 def create_app(config_object=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config_object or Config)
+    app.config.setdefault('UPLOAD_FOLDER', Config.UPLOAD_FOLDER)
+    configure_observability(app)
     if os.getenv('FLASK_ENV') == 'production' and app.config['SECRET_KEY'] == 'change-me-in-production':
         raise RuntimeError('SECRET_KEY must be set to a strong secret in production.')
     from .cli import register_commands
     register_commands(app)
     os.makedirs(app.instance_path, exist_ok=True)
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    if not app.config.get('OBJECT_STORAGE_BUCKET'):
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     if os.getenv('TRUST_PROXY', '0') == '1':
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
@@ -66,6 +72,15 @@ def create_app(config_object=None):
 
     @app.after_request
     def security_headers(response):
+        response.headers.setdefault('X-Request-ID', getattr(g, 'request_id', ''))
+        started_at = getattr(g, 'request_started_at', time.perf_counter())
+        app.logger.info(
+            'request completed',
+            extra={
+                'http_status': response.status_code,
+                'duration_ms': round((time.perf_counter() - started_at) * 1000, 2),
+            },
+        )
         response.headers.setdefault('X-Content-Type-Options', 'nosniff')
         response.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
         response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
@@ -80,6 +95,11 @@ def create_app(config_object=None):
             response.headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
         return response
 
+    @app.before_request
+    def assign_request_id():
+        g.request_id = uuid4().hex
+        g.request_started_at = time.perf_counter()
+
     @app.errorhandler(403)
     def forbidden(_):
         from flask import render_template
@@ -91,14 +111,27 @@ def create_app(config_object=None):
         return render_template('errors/404.html'), 404
 
     @app.errorhandler(500)
-    def server_error(_):
+    def server_error(error):
         db.session.rollback()
+        original_error = getattr(error, 'original_exception', None) or error
+        app.logger.error(
+            'Unhandled request error',
+            exc_info=(
+                type(original_error),
+                original_error,
+                original_error.__traceback__,
+            ),
+        )
+        if app.config.get('SENTRY_DSN'):
+            import sentry_sdk
+            sentry_sdk.capture_exception(original_error)
         from flask import render_template
         return render_template('errors/500.html'), 500
 
     @app.errorhandler(413)
     def too_large(_):
-        flash('The uploaded file is too large. Maximum allowed size is 5 MB.', 'error')
+        maximum_mb = app.config['MAX_CONTENT_LENGTH'] // (1024 * 1024)
+        flash(f'The uploaded file is too large. Maximum allowed size is {maximum_mb} MB.', 'error')
         return redirect(url_for('main.home'))
 
     from .main.routes import bp as main_bp
@@ -117,6 +150,7 @@ def create_app(config_object=None):
     from .talent.cv_routes import bp as cv_bp
     from .employer.apprenticeship_routes import bp as employer_apprenticeship_bp
     from .employer.billing_routes import bp as billing_bp
+    from .moderation import bp as moderation_bp
 
     app.add_url_rule('/dashboard', 'dashboard', __import__('app.routes', fromlist=['dashboard']).dashboard)
 
@@ -136,5 +170,6 @@ def create_app(config_object=None):
     app.register_blueprint(cv_bp)
     app.register_blueprint(employer_apprenticeship_bp)
     app.register_blueprint(billing_bp)
+    app.register_blueprint(moderation_bp)
 
     return app

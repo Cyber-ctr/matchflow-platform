@@ -21,6 +21,22 @@ def register_commands(app):
     def bootstrap_db():
         """Create the database schema and starter skills."""
         db.create_all()
+        from sqlalchemy import inspect, text
+        columns = {column['name'] for column in inspect(db.engine).get_columns('talent_profiles')}
+        if 'avatar_filename' not in columns:
+            with db.engine.begin() as connection:
+                connection.execute(text(
+                    'ALTER TABLE talent_profiles ADD COLUMN avatar_filename VARCHAR(255)'
+                ))
+        report_columns = {
+            column['name']
+            for column in inspect(db.engine).get_columns('moderation_reports')
+        }
+        if 'review_notes' not in report_columns:
+            with db.engine.begin() as connection:
+                connection.execute(text(
+                    'ALTER TABLE moderation_reports ADD COLUMN review_notes VARCHAR(2000)'
+                ))
         existing = {skill.name for skill in Skill.query.all()}
         for name, category in SKILLS:
             if name not in existing:

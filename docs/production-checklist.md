@@ -6,6 +6,7 @@
 - [ ] Configure production `DATABASE_URL`.
 - [ ] Create an admin account with a unique password.
 - [ ] Establish Flask-Migrate migration history and deploy with `db upgrade`.
+- [ ] Run `flask --app wsgi:app bootstrap-db` on existing installations to create the moderation table and add the talent avatar key column before switching deployment startup away from that command.
 - [ ] Configure `TRUSTED_HOSTS` to the actual domain.
 - [ ] Set `SESSION_COOKIE_SECURE=1` and `TRUST_PROXY=1` behind HTTPS reverse proxy.
 
@@ -14,7 +15,11 @@
 - [ ] Configure SMTP and test email verification.
 - [ ] Test password reset delivery and expiry.
 - [ ] Define talent/business verification procedures.
-- [ ] Define abuse, fraud and moderation response process.
+- [ ] Assign a moderation owner and response targets for reports.
+- [ ] Review open reports daily: check the relevant profile/listing and supporting evidence, request clarification where needed, and record the evidence checked and rationale in the admin review note before resolving or dismissing a report.
+- [ ] Keep reports open or under review while investigating; escalate credible immediate safety risks through the documented incident process.
+- [ ] Base account/listing actions on corroborated policy violations and proportional decisions, not report counts alone.
+- [ ] Never automatically lower trust scores or disable accounts based on report volume; use reports as human-review signals only.
 
 ## Marketplace
 
@@ -34,8 +39,14 @@
 
 ## Operations
 
-- [ ] Use PostgreSQL backups and test a restore.
-- [ ] Move uploads to S3-compatible storage.
+- [ ] Set `OBJECT_STORAGE_BUCKET`, `OBJECT_STORAGE_REGION`, and (if needed) `OBJECT_STORAGE_ENDPOINT_URL`; provide credentials through the runtime's secret store or standard AWS credential chain.
+- [ ] Keep the object bucket private and use least-privilege access; verify CV downloads require the existing talent/employer authorization checks.
+- [ ] Before enabling object storage for an existing installation, copy `instance/uploads/` into the configured bucket prefix so existing CV keys continue to resolve.
+- [ ] Set `SENTRY_DSN` to enable Flask error monitoring. Keep `send_default_pii` disabled and never put tokens or upload contents into log messages.
+- [ ] Ship JSON application logs to a centralized log service and alert on elevated 5xx rates and error-monitoring events.
+- [ ] For Docker Compose, verify the `db-backup` service creates daily archives in the `matchflow_backups` volume and performs a restore test weekly.
+- [ ] Copy backups off the application host to encrypted, access-controlled storage; configure retention and alert on failed jobs.
+- [ ] For non-Compose PostgreSQL, schedule `scripts/postgres-backup.sh backup` and periodically run `scripts/postgres-backup.sh restore-test <archive>` with PostgreSQL client tools installed and a role allowed to create/drop temporary databases.
+- [ ] Record restore-test results and verify recovery-point and recovery-time objectives.
 - [ ] Move rate limiting to Redis/Valkey for multiple web instances.
-- [ ] Configure central logs/error monitoring.
 - [ ] Monitor response time, failed requests, signups, applications, matches and paid conversions.

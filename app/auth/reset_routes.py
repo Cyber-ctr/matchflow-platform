@@ -29,9 +29,9 @@ def request_reset():
         from flask import current_app
         if not sent:
             if current_app.config.get('TESTING') or current_app.debug:
-                current_app.logger.info('SMTP is not configured. Password reset link for %s: %s', email, reset_url)
+                current_app.logger.info('SMTP is not configured; password reset email was not sent')
             else:
-                current_app.logger.warning('Password reset requested for %s but SMTP delivery is unavailable.', email)
+                current_app.logger.warning('Password reset email could not be delivered')
     flash('If an account exists for that email, a reset link has been generated.', 'success')
     return redirect(url_for('password_reset.forgot_password'))
 

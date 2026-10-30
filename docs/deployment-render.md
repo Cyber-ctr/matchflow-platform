@@ -35,15 +35,20 @@ MAIL_PASSWORD=...
 MAIL_DEFAULT_SENDER=...
 ```
 
+For error monitoring, set `SENTRY_DSN`. For private S3-compatible uploads, set `OBJECT_STORAGE_BUCKET`, `OBJECT_STORAGE_REGION`, and optionally `OBJECT_STORAGE_ENDPOINT_URL` and `OBJECT_STORAGE_PREFIX`; provide credentials using Render secret environment variables. Copy any existing local uploads to the matching bucket prefix before switching storage.
+
+Existing deployments should run `flask --app wsgi:app bootstrap-db` to add new nullable moderation review-note storage. Admins must record the evidence checked and rationale for each report status update; the decision and note are retained in the audit log.
+
 ## Database initialization
 
-For the first deployment, the included Render start command bootstraps the schema and starter assessments. Once Flask-Migrate history is established, change the start process to run `flask --app wsgi:app db upgrade` before Gunicorn.
+For the first deployment, the included Render start command bootstraps the schema and starter assessments. `bootstrap-db` also creates the moderation table and adds the nullable talent avatar key column on existing databases. Establish migration history for future schema changes; generate and review a migration before switching the start process to `flask --app wsgi:app db upgrade`.
 
 ## Scaling
 
 When scaling beyond one web instance:
 
 - Use Redis/Valkey for the rate limiter.
-- Use external object storage for uploads.
+- Use a private S3-compatible bucket for uploads.
 - Ensure all application state is in PostgreSQL or another shared service.
 - Keep Gunicorn workers stateless.
+- Render does not run the Compose backup sidecar. Enable managed PostgreSQL backups and use a trusted scheduled runner to create off-site archives and periodically run `scripts/postgres-backup.sh restore-test <archive>`.

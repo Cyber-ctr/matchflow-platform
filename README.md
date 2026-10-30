@@ -20,6 +20,10 @@ MatchFlow is a mobile-first talent marketplace for Cameroon-focused SME hiring, 
 - Reviews and feedback records
 - Payment data model + provider-neutral payment service
 - Audit-ready schema for operational logging
+- JSON application logs with request IDs and optional Sentry error monitoring
+- Local-development and S3-compatible private object storage for CVs and talent avatars
+- User/job reporting, rate-limited intake, and an audited admin moderation queue
+- Docker Compose PostgreSQL daily backups with weekly isolated restore tests
 - Global CSRF protection
 - Rate limiting
 - Secure password hashing using Werkzeug scrypt
@@ -167,9 +171,9 @@ MatchFlow_Production/
 2. Add email verification before enabling higher-trust actions.
 3. Add identity/business verification workflows that match your compliance requirements.
 4. Put rate limiting in Redis/Valkey for multi-instance deployments.
-5. Add centralized structured logging and an error-monitoring service.
-6. Add object storage (S3-compatible) for CVs/avatars instead of local disk.
-7. Add automated backups and restore tests for PostgreSQL.
-8. Add stronger anti-fraud and moderation tooling as user volume grows.
+5. Configure `SENTRY_DSN` to enable error monitoring; application logs are emitted as JSON to stdout.
+6. Configure `OBJECT_STORAGE_BUCKET` (and optional endpoint/region settings) to use private S3-compatible storage. Copy existing files from `instance/uploads/` into the configured bucket prefix before switching an existing deployment.
+7. Docker Compose includes daily PostgreSQL backups and weekly isolated restore tests. For other hosting platforms, schedule `scripts/postgres-backup.sh` with PostgreSQL client tools and copy archives to encrypted off-host storage.
+8. Review user/job reports in the admin dashboard: check the relevant profile/listing and evidence, then record the evidence checked and decision rationale in the required review note before resolving or dismissing a report. Escalate immediate safety risks through the incident process. Base actions on corroborated policy violations, never report volume; reports do not automatically lower trust scores or disable accounts.
 9. Add employer subscriptions and invoices after validating willingness to pay.
 10. Build the Android client against `/api/v1` only after the web marketplace has validated product-market fit.
