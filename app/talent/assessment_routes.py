@@ -1,11 +1,11 @@
 import json
-from datetime import datetime
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.models import Assessment, AssessmentAttempt
 from app.utils.security import role_required
+from app.utils.time import utcnow_naive
 
 bp = Blueprint('assessment', __name__, url_prefix='/assessments')
 
@@ -43,7 +43,7 @@ def take(assessment_id):
             assessment_id=assessment.id,
             score=score,
             passed=score >= assessment.pass_score,
-            completed_at=datetime.utcnow(),
+            completed_at=utcnow_naive(),
         )
         db.session.add(attempt)
         if current_user.talent_profile:

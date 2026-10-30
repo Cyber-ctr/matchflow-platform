@@ -1,1 +1,82 @@
-{% extends 'base.html' %}{% block title %}Find opportunities{% endblock %}{% block content %}<section class="page-hero"><div class="container"><p class="kicker">MARKETPLACE</p><h1>Find your next opportunity.</h1><p>Search junior jobs, freelance work and apprenticeships.</p></div></section><section class="section"><div class="container"><form class="search-panel" method="get"><input name="q" value="{{ q }}" placeholder="Search developer, designer, bookkeeping..."><input name="city" value="{{ city }}" placeholder="City"><select name="category"><option value="">All categories</option><option {% if category == 'Frontend Development' %}selected{% endif %}>Frontend Development</option><option {% if category == 'Graphic Design' %}selected{% endif %}>Graphic Design</option><option {% if category == 'Bookkeeping' %}selected{% endif %}>Bookkeeping</option></select><select name="engagement"><option value="">All engagement types</option><option {% if engagement == 'Apprenticeship' %}selected{% endif %}>Apprenticeship</option><option {% if engagement == 'Freelance' %}selected{% endif %}>Freelance</option><option {% if engagement == 'Part-time' %}selected{% endif %}>Part-time</option><option {% if engagement == 'Full-time' %}selected{% endif %}>Full-time</option></select><button class="button">Search</button></form><div class="job-grid">{% for job in jobs %}<a class="job-card" href="{{ url_for('main.job_detail', job_id=job.id) }}"><div class="job-top"><span class="category-tag">{{ job.category }}</span><span>{{ job.engagement_type }}</span></div><h3>{{ job.title }}</h3><p>{{ job.employer.business_name }}{% if job.employer.verified %} · ✓ verified{% endif %}</p><p>{{ job.city or 'Cameroon' }} · {{ job.work_type }}</p><div class="job-bottom"><span>{{ job.views }} views</span><strong>{{ job.salary_min|money if job.salary_min else 'Negotiable' }}</strong></div></a>{else}<div class="empty-state"><h3>No opportunities match those filters.</h3><p>Try a broader search or check back later.</p></div>{% endfor %}</div></div></section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Find opportunities{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div class="container">
+    <p class="kicker">MARKETPLACE</p>
+    <h1>Find your next opportunity.</h1>
+    <p>Search junior jobs, freelance work and apprenticeships.</p>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+    <form class="search-panel" method="get" role="search" aria-label="Search opportunities">
+      <label class="search-keyword">Keywords
+        <input name="q" value="{{ q }}" placeholder="Developer, designer, bookkeeping..." autocomplete="off">
+      </label>
+      <label>City
+        <input name="city" value="{{ city }}" placeholder="Any city" autocomplete="address-level2">
+      </label>
+      <label>Category
+        <select name="category">
+          <option value="">All categories</option>
+          <option value="Frontend Development" {% if category == 'Frontend Development' %}selected{% endif %}>Frontend Development</option>
+          <option value="Graphic Design" {% if category == 'Graphic Design' %}selected{% endif %}>Graphic Design</option>
+          <option value="Bookkeeping" {% if category == 'Bookkeeping' %}selected{% endif %}>Bookkeeping</option>
+        </select>
+      </label>
+      <label>Work type
+        <select name="engagement">
+          <option value="">All work types</option>
+          <option value="Apprenticeship" {% if engagement == 'Apprenticeship' %}selected{% endif %}>Apprenticeship</option>
+          <option value="Freelance" {% if engagement == 'Freelance' %}selected{% endif %}>Freelance</option>
+          <option value="Part-time" {% if engagement == 'Part-time' %}selected{% endif %}>Part-time</option>
+          <option value="Full-time" {% if engagement == 'Full-time' %}selected{% endif %}>Full-time</option>
+        </select>
+      </label>
+      <div class="search-actions">
+        <button class="button" type="submit">Search opportunities</button>
+        {% if q or city or category or engagement %}
+        <a class="text-link" href="{{ url_for('main.jobs') }}">Clear filters</a>
+        {% endif %}
+      </div>
+    </form>
+
+    <div class="section-heading results-heading">
+      <div>
+        <p class="kicker">OPEN ROLES</p>
+        <h2>{{ jobs|length }} {{ 'opportunity' if jobs|length == 1 else 'opportunities' }}</h2>
+      </div>
+    </div>
+    <div class="job-grid">
+      {% for job in jobs %}
+      <a class="job-card" href="{{ url_for('main.job_detail', job_id=job.id) }}">
+        <div class="job-top">
+          <span class="category-tag">{{ job.category }}</span>
+          <span>{{ job.engagement_type }}</span>
+        </div>
+        <h3>{{ job.title }}</h3>
+        <p>{{ job.employer.business_name }}{% if job.employer.verified %} · <span class="verified">Verified employer</span>{% endif %}</p>
+        <p>{{ job.city or 'Cameroon' }} · {{ job.work_type }}</p>
+        <div class="job-bottom">
+          <span>{{ job.views }} {{ 'view' if job.views == 1 else 'views' }}</span>
+          <strong>{{ job.salary_min|money if job.salary_min else 'Negotiable' }}</strong>
+        </div>
+        <span class="job-card-action" aria-hidden="true">View opportunity <span>→</span></span>
+      </a>
+      {% else %}
+      <div class="empty-state">
+        <h3>No opportunities match those filters yet.</h3>
+        {% if q or city or category or engagement %}
+        <p>Try a different city or category, or clear your filters to see every open role.</p>
+        <a class="button button-outline" href="{{ url_for('main.jobs') }}">Clear filters</a>
+        {% else %}
+        <p>No roles are open right now. Check back soon to see new opportunities.</p>
+        <a class="button button-outline" href="{{ url_for('main.jobs') }}">Browse all opportunities</a>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

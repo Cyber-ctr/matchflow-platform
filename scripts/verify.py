@@ -6,14 +6,14 @@ root = Path(__file__).resolve().parents[1]
 errors = []
 for path in [*root.glob('*.py'), *root.joinpath('app').rglob('*.py'), *root.joinpath('tests').rglob('*.py')]:
     try:
-        ast.parse(path.read_text())
+        ast.parse(path.read_text(encoding='utf-8'))
     except Exception as exc:
         errors.append(f'PYTHON {path}: {exc}')
 
 env = jinja2.Environment()
 for path in root.joinpath('app/templates').rglob('*.html'):
     try:
-        env.parse(path.read_text())
+        env.parse(path.read_text(encoding='utf-8'))
     except Exception as exc:
         errors.append(f'JINJA {path}: {exc}')
 

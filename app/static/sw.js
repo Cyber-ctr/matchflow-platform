@@ -1,7 +1,8 @@
-const CACHE = 'matchflow-v2';
+const CACHE = 'matchflow-v3';
 const APP_SHELL = [
   '/',
   '/static/css/styles.css',
+  '/static/css/enhancements.css',
   '/static/js/app.js',
   '/static/manifest.webmanifest',
   '/static/icons/favicon.png',

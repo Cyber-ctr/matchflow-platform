@@ -1,11 +1,11 @@
-from datetime import datetime
 from .extensions import db
+from .utils.time import utcnow_naive
 
 
 class TimestampMixin:
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow_naive, nullable=False)
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow,
+        db.DateTime, default=utcnow_naive, onupdate=utcnow_naive,
         nullable=False,
     )
 
@@ -169,7 +169,7 @@ class Application(TimestampMixin, db.Model):
     cover_letter = db.Column(db.Text)
     status = db.Column(db.String(30), default='submitted', nullable=False, index=True)
     employer_note = db.Column(db.Text)
-    applied_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    applied_at = db.Column(db.DateTime, default=utcnow_naive, nullable=False)
 
     __table_args__ = (db.UniqueConstraint('job_id', 'talent_id', name='uq_application_job_talent'),)
     job = db.relationship('Job', back_populates='applications')

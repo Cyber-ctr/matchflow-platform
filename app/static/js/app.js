@@ -2,8 +2,34 @@
   const toggle = document.querySelector('[data-menu-toggle]');
   const nav = document.querySelector('[data-nav]');
   if (toggle && nav) {
+    function setMenuOpen(isOpen) {
+      nav.classList.toggle('open', isOpen);
+      toggle.setAttribute('aria-expanded', String(isOpen));
+      toggle.setAttribute(
+        'aria-label',
+        isOpen ? 'Close navigation menu' : 'Open navigation menu'
+      );
+    }
+
     toggle.addEventListener('click', function () {
-      nav.classList.toggle('open');
+      setMenuOpen(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+
+    nav.addEventListener('click', function (event) {
+      if (event.target.closest('a, form button')) setMenuOpen(false);
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+        setMenuOpen(false);
+        toggle.focus();
+      }
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!nav.contains(event.target) && !toggle.contains(event.target)) {
+        setMenuOpen(false);
+      }
     });
   }
 
@@ -14,8 +40,16 @@
     const selected = document.querySelector('[data-role-switch]:checked');
     if (!selected) return;
     const isTalent = selected.value === 'talent';
-    if (talentFields) talentFields.classList.toggle('hidden', !isTalent);
-    if (employerFields) employerFields.classList.toggle('hidden', isTalent);
+    if (talentFields) {
+      talentFields.hidden = !isTalent;
+      talentFields.inert = !isTalent;
+      talentFields.classList.toggle('hidden', !isTalent);
+    }
+    if (employerFields) {
+      employerFields.hidden = isTalent;
+      employerFields.inert = isTalent;
+      employerFields.classList.toggle('hidden', isTalent);
+    }
   }
   roles.forEach((role) => role.addEventListener('change', updateRoleFields));
   updateRoleFields();

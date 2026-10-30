@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 
 from flask import Blueprint, abort, flash, redirect, request, url_for
 from flask_login import current_user, login_required
@@ -7,6 +6,7 @@ from flask_login import current_user, login_required
 from app.extensions import db, limiter
 from app.models import AuditLog, Job, ModerationReport, User
 from app.utils.security import role_required
+from app.utils.time import utcnow_naive
 from app.utils.urls import is_safe_url
 
 bp = Blueprint('moderation', __name__, url_prefix='/moderation')
@@ -92,7 +92,7 @@ def review_report(report_id):
         return redirect(url_for('admin.dashboard'))
     report.status = status
     report.reviewed_by_id = current_user.id
-    report.reviewed_at = datetime.utcnow()
+    report.reviewed_at = utcnow_naive()
     report.review_notes = review_notes
     db.session.add(AuditLog(
         actor_id=current_user.id,

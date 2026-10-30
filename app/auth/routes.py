@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import select
@@ -7,6 +5,7 @@ from email_validator import validate_email, EmailNotValidError
 
 from app.extensions import db, limiter
 from app.models import EmployerProfile, TalentProfile, User
+from app.utils.time import utcnow_naive
 from app.utils.urls import is_safe_url
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -32,7 +31,7 @@ def login_post():
     if not user or not user.check_password(password) or not user.is_active:
         flash('Invalid email or password.', 'error')
         return render_template('auth/login.html'), 401
-    user.last_login_at = datetime.utcnow()
+    user.last_login_at = utcnow_naive()
     db.session.commit()
     login_user(user, remember=request.form.get('remember') == '1')
     from flask import session

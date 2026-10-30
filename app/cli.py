@@ -19,24 +19,47 @@ SKILLS = [
 def register_commands(app):
     @app.cli.command('bootstrap-db')
     def bootstrap_db():
-        """Create the database schema and starter skills."""
+        """Create missing tables and safely add missing nullable model columns."""
         db.create_all()
-        from sqlalchemy import inspect, text
-        columns = {column['name'] for column in inspect(db.engine).get_columns('talent_profiles')}
-        if 'avatar_filename' not in columns:
-            with db.engine.begin() as connection:
-                connection.execute(text(
-                    'ALTER TABLE talent_profiles ADD COLUMN avatar_filename VARCHAR(255)'
-                ))
-        report_columns = {
-            column['name']
-            for column in inspect(db.engine).get_columns('moderation_reports')
-        }
-        if 'review_notes' not in report_columns:
-            with db.engine.begin() as connection:
-                connection.execute(text(
-                    'ALTER TABLE moderation_reports ADD COLUMN review_notes VARCHAR(2000)'
-                ))
+        from sqlalchemy import inspect
+        from sqlalchemy.schema import CreateColumn
+
+        inspector = inspect(db.engine)
+        existing_tables = set(inspector.get_table_names())
+        added_columns = []
+        unsafe_columns = []
+        with db.engine.begin() as connection:
+            preparer = connection.dialect.identifier_preparer
+            for table in db.metadata.sorted_tables:
+                if table.name not in existing_tables:
+                    continue
+                existing_columns = {
+                    column['name']
+                    for column in inspector.get_columns(table.name, schema=table.schema)
+                }
+                for column in table.columns:
+                    if column.name in existing_columns:
+                        continue
+                    if not column.nullable and column.server_default is None:
+                        unsafe_columns.append(f'{table.name}.{column.name}')
+                        continue
+                    table_name = preparer.format_table(table)
+                    column_ddl = str(
+                        CreateColumn(column).compile(dialect=connection.dialect)
+                    )
+                    connection.exec_driver_sql(
+                        f'ALTER TABLE {table_name} ADD COLUMN {column_ddl}'
+                    )
+                    added_columns.append(f'{table.name}.{column.name}')
+        if unsafe_columns:
+            raise click.ClickException(
+                'Existing database is missing required columns that cannot be '
+                'added safely without data migration: '
+                f'{", ".join(unsafe_columns)}. Create and review a Flask-Migrate '
+                'migration, then run `flask --app wsgi:app db upgrade`.'
+            )
+        if added_columns:
+            click.echo(f'Added missing nullable columns: {", ".join(added_columns)}.')
         existing = {skill.name for skill in Skill.query.all()}
         for name, category in SKILLS:
             if name not in existing:

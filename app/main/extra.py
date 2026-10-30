@@ -1,4 +1,3 @@
-from datetime import datetime
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import or_
@@ -6,6 +5,7 @@ from sqlalchemy import or_
 from app.extensions import db, limiter
 from app.models import Message, Notification, User
 from app.services.notifications import notify
+from app.utils.time import utcnow_naive
 
 bp = Blueprint('messaging', __name__, url_prefix='/messages')
 
@@ -45,6 +45,6 @@ def thread(user_id):
     ).order_by(Message.created_at.asc()).all()
     for item in messages:
         if item.receiver_id == current_user.id and not item.read_at:
-            item.read_at = datetime.utcnow()
+            item.read_at = utcnow_naive()
     db.session.commit()
     return render_template('messaging/thread.html', other=other, messages=messages)

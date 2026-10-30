@@ -7,6 +7,7 @@ from app.models import Application, Job, Notification, SavedJob, Skill
 from app.services.matching import recommended_jobs
 from app.services.notifications import notify
 from app.utils.security import role_required
+from app.utils.time import utcnow_naive
 
 bp = Blueprint('talent', __name__, url_prefix='/talent')
 
@@ -125,7 +126,6 @@ def notifications():
     items = current_user.notifications.order_by(Notification.created_at.desc()).all()
     for item in items:
         if not item.read_at:
-            from datetime import datetime
-            item.read_at = datetime.utcnow()
+            item.read_at = utcnow_naive()
     db.session.commit()
     return render_template('main/notifications.html', notifications=items)

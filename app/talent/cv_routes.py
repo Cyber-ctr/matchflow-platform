@@ -22,6 +22,8 @@ def extension_allowed(filename):
 @login_required
 @role_required('talent')
 def upload():
+    if not current_user.talent_profile:
+        abort(404)
     uploaded = request.files.get('cv')
     if not uploaded or not uploaded.filename:
         flash('Choose a CV file first.', 'error')
@@ -45,6 +47,8 @@ def upload():
 @login_required
 @role_required('talent')
 def upload_avatar():
+    if not current_user.talent_profile:
+        abort(404)
     uploaded = request.files.get('avatar')
     if not uploaded or not uploaded.filename:
         flash('Choose an avatar image first.', 'error')
@@ -84,7 +88,10 @@ def download_self():
 @login_required
 @role_required('employer', 'admin')
 def download_candidate(profile_id):
-    if current_user.role == 'employer' and not current_user.employer_profile.verified:
+    if current_user.role == 'employer' and (
+        not current_user.employer_profile
+        or not current_user.employer_profile.verified
+    ):
         abort(403)
     profile = db.session.get(TalentProfile, profile_id)
     if not profile or not profile.cv_filename:

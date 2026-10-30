@@ -59,6 +59,48 @@ def test_cv_and_avatar_use_local_storage_adapter(client, app, tmp_path):
     assert avatar.data == b'png-test'
 
 
+def test_cv_routes_handle_missing_role_profiles_without_server_error(client, app):
+    with app.app_context():
+        talent = create_user('profiled-talent@example.com', 'talent')
+        orphan_employer = User(email='orphan-employer@example.com', role='employer')
+        orphan_employer.set_password('StrongPass123')
+        orphan_talent = User(email='orphan-talent@example.com', role='talent')
+        orphan_talent.set_password('StrongPass123')
+        db.session.add_all([orphan_employer, orphan_talent])
+        db.session.commit()
+        profile_id = talent.talent_profile.id
+
+    client.post('/auth/login', data={
+        'email': 'orphan-employer@example.com',
+        'password': 'StrongPass123',
+    })
+    assert client.get(f'/talent/talent/{profile_id}/cv').status_code == 403
+    client.post('/auth/logout')
+    client.post('/auth/login', data={
+        'email': 'orphan-talent@example.com',
+        'password': 'StrongPass123',
+    })
+    assert client.post(
+        '/talent/profile/cv',
+        data={'cv': (BytesIO(b'%PDF-test'), 'resume.pdf')},
+        content_type='multipart/form-data',
+    ).status_code == 404
+
+    client.post('/auth/logout')
+    client.post('/auth/login', data={
+        'email': 'profiled-talent@example.com',
+        'password': 'StrongPass123',
+    })
+    with app.app_context():
+        db.session.delete(db.session.get(TalentProfile, profile_id))
+        db.session.commit()
+    assert client.post(
+        '/talent/profile/avatar',
+        data={'avatar': (BytesIO(b'png-test'), 'photo.png')},
+        content_type='multipart/form-data',
+    ).status_code == 404
+
+
 def test_job_report_is_triaged_and_audited(client, app):
     with app.app_context():
         reporter = create_user('reporter@example.com', 'talent')
@@ -197,17 +239,24 @@ def test_bootstrap_db_upgrades_existing_talent_profile_schema(app):
         db.session.execute(text(
             'ALTER TABLE talent_profiles DROP COLUMN avatar_filename'
         ))
+        db.session.execute(text(
+            'ALTER TABLE users DROP COLUMN last_login_at'
+        ))
         db.session.commit()
 
     result = app.test_cli_runner().invoke(args=['bootstrap-db'])
     assert result.exit_code == 0
+    assert 'talent_profiles.avatar_filename' in result.output
+    assert 'users.last_login_at' in result.output
     with app.app_context():
-        columns = {
-            column['name']
-            for column in inspect(db.engine).get_columns('talent_profiles')
-        }
-        assert 'avatar_filename' in columns
-        assert 'moderation_reports' in inspect(db.engine).get_table_names()
+        inspector = inspect(db.engine)
+        actual_tables = set(inspector.get_table_names())
+        assert set(db.metadata.tables).issubset(actual_tables)
+        for table_name, model_table in db.metadata.tables.items():
+            actual_columns = {
+                column['name'] for column in inspector.get_columns(table_name)
+            }
+            assert {column.name for column in model_table.columns} <= actual_columns
 
 
 def test_bootstrap_db_adds_review_notes_to_existing_report_table(app):
@@ -225,6 +274,17 @@ def test_bootstrap_db_adds_review_notes_to_existing_report_table(app):
             for column in inspect(db.engine).get_columns('moderation_reports')
         }
         assert 'review_notes' in columns
+
+
+def test_bootstrap_db_rejects_missing_required_column_with_migration_guidance(app):
+    with app.app_context():
+        db.session.execute(text('ALTER TABLE users DROP COLUMN is_active'))
+        db.session.commit()
+
+    result = app.test_cli_runner().invoke(args=['bootstrap-db'])
+    assert result.exit_code != 0
+    assert 'users.is_active' in result.output
+    assert 'Flask-Migrate migration' in result.output
 
 
 def test_s3_storage_uses_private_bucket_objects(app, monkeypatch):

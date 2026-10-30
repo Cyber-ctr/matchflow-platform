@@ -1,6 +1,5 @@
 import os
 import time
-from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask, flash, g, redirect, url_for
 from flask_login import current_user
@@ -13,6 +12,7 @@ from .config import Config
 from .extensions import csrf, db, limiter, login_manager, migrate
 from .models import Notification, User
 from .services.observability import configure_observability
+from .utils.time import utcnow_naive
 
 
 def create_app(config_object=None):
@@ -68,7 +68,7 @@ def create_app(config_object=None):
             unread = Notification.query.filter_by(
                 user_id=current_user.id, read_at=None,
             ).count()
-        return {'now': datetime.utcnow(), 'unread_notifications': unread}
+        return {'now': utcnow_naive(), 'unread_notifications': unread}
 
     @app.after_request
     def security_headers(response):
