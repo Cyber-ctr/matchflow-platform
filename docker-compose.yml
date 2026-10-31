@@ -9,7 +9,7 @@ services:
       DATABASE_URL: postgresql+psycopg://matchflow:matchflow@db:5432/matchflow
       SESSION_COOKIE_SECURE: "0"
       TRUST_PROXY: "0"
-      RATELIMIT_STORAGE_URI: memory://
+      RATELIMIT_STORAGE_URI: redis://valkey:6379/0
       OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-}
       OBJECT_STORAGE_ENDPOINT_URL: ${OBJECT_STORAGE_ENDPOINT_URL:-}
       OBJECT_STORAGE_REGION: ${OBJECT_STORAGE_REGION:-auto}
@@ -21,7 +21,18 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      valkey:
+        condition: service_healthy
     command: sh -c "flask --app wsgi:app bootstrap-db && flask --app wsgi:app seed-assessments && gunicorn --workers 3 --threads 2 --timeout 60 --bind 0.0.0.0:8000 wsgi:app"
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    command: valkey-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   db:
     image: postgres:16-alpine

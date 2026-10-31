@@ -168,9 +168,9 @@ MatchFlow_Production/
 ## 8. Recommended next engineering steps
 
 1. Connect your chosen Mobile Money providers through `app/services/payments.py` and add webhook verification.
-2. Add email verification before enabling higher-trust actions.
-3. Add identity/business verification workflows that match your compliance requirements.
-4. Put rate limiting in Redis/Valkey for multi-instance deployments.
+2. Configure SMTP for email verification. Verified email is required for applications, messaging, job posting, billing and identity/business verification requests.
+3. Configure the generic manual identity/business review process to match applicable compliance rules before requesting sensitive evidence; the current workflow does not collect identity documents.
+4. Set `RATELIMIT_STORAGE_URI` to a shared Redis/Valkey URL for multi-instance deployments. Docker Compose includes a Valkey service for local and self-hosted use.
 5. Configure `SENTRY_DSN` to enable error monitoring; application logs are emitted as JSON to stdout.
 6. Configure `OBJECT_STORAGE_BUCKET` (and optional endpoint/region settings) to use private S3-compatible storage. Copy existing files from `instance/uploads/` into the configured bucket prefix before switching an existing deployment.
 7. Docker Compose includes daily PostgreSQL backups and weekly isolated restore tests. For other hosting platforms, schedule `scripts/postgres-backup.sh` with PostgreSQL client tools and copy archives to encrypted off-host storage.

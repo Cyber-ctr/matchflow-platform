@@ -35,6 +35,8 @@ MAIL_PASSWORD=...
 MAIL_DEFAULT_SENDER=...
 ```
 
+For rate limiting across multiple instances, configure a shared Redis/Valkey service URL as `RATELIMIT_STORAGE_URI` (or `REDIS_URL`). Use `rediss://` when the service requires TLS. The application defaults to in-memory counters for local single-instance development; in-memory counters are not shared across instances.
+
 For error monitoring, set `SENTRY_DSN`. For private S3-compatible uploads, set `OBJECT_STORAGE_BUCKET`, `OBJECT_STORAGE_REGION`, and optionally `OBJECT_STORAGE_ENDPOINT_URL` and `OBJECT_STORAGE_PREFIX`; provide credentials using Render secret environment variables. Copy any existing local uploads to the matching bucket prefix before switching storage.
 
 Existing deployments should run `flask --app wsgi:app bootstrap-db` to add new nullable moderation review-note storage. Admins must record the evidence checked and rationale for each report status update; the decision and note are retained in the audit log.
@@ -47,7 +49,7 @@ For the first deployment, the included Render start command bootstraps the schem
 
 When scaling beyond one web instance:
 
-- Use Redis/Valkey for the rate limiter.
+- Set `RATELIMIT_STORAGE_URI` (or `REDIS_URL`) to a shared Redis/Valkey service for the rate limiter. Docker Compose runs a local Valkey service automatically.
 - Use a private S3-compatible bucket for uploads.
 - Ensure all application state is in PostgreSQL or another shared service.
 - Keep Gunicorn workers stateless.

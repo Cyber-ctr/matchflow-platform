@@ -10,6 +10,18 @@
 </section>
 <section class="section">
   <div class="container form-shell">
+    <div class="card">
+      <h2>Talent identity verification</h2>
+      <p class="muted">Status: {{ talent.verification_status|replace('_', ' ')|title }}. Do not submit identity numbers or upload identity documents here.</p>
+      {% if talent.verification_review_notes %}<p>{{ talent.verification_review_notes }}</p>{% endif %}
+      {% if talent.verification_status != 'pending' and talent.verification_status != 'verified' %}
+      <form method="post" action="{{ url_for('talent.request_verification') }}" class="form-stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>Context for the reviewer (optional)<textarea name="verification_note" maxlength="1000" rows="3" placeholder="Share non-sensitive context relevant to reviewing your profile."></textarea></label>
+        <button class="button button-outline">Request identity verification</button>
+      </form>
+      {% endif %}
+    </div>
     <form method="post" class="form-stack card">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="two-col">

@@ -12,9 +12,9 @@
 
 ## Identity and trust
 
-- [ ] Configure SMTP and test email verification.
+- [ ] Configure SMTP, verify account links expire, and test that unverified accounts cannot apply, message, post jobs, use billing, or request verification.
 - [ ] Test password reset delivery and expiry.
-- [ ] Define talent/business verification procedures.
+- [ ] Align the generic talent/business review flow with applicable compliance rules before requesting or storing sensitive evidence; the current flow only records profile context and reviewer rationale, with no document uploads.
 - [ ] Assign a moderation owner and response targets for reports.
 - [ ] Review open reports daily: check the relevant profile/listing and supporting evidence, request clarification where needed, and record the evidence checked and rationale in the admin review note before resolving or dismissing a report.
 - [ ] Keep reports open or under review while investigating; escalate credible immediate safety risks through the documented incident process.
@@ -48,5 +48,5 @@
 - [ ] Copy backups off the application host to encrypted, access-controlled storage; configure retention and alert on failed jobs.
 - [ ] For non-Compose PostgreSQL, schedule `scripts/postgres-backup.sh backup` and periodically run `scripts/postgres-backup.sh restore-test <archive>` with PostgreSQL client tools installed and a role allowed to create/drop temporary databases.
 - [ ] Record restore-test results and verify recovery-point and recovery-time objectives.
-- [ ] Move rate limiting to Redis/Valkey for multiple web instances.
+- [ ] Set `RATELIMIT_STORAGE_URI` to a shared Redis/Valkey service before running multiple web instances.
 - [ ] Monitor response time, failed requests, signups, applications, matches and paid conversions.

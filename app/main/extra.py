@@ -5,6 +5,7 @@ from sqlalchemy import or_
 from app.extensions import db, limiter
 from app.models import Message, Notification, User
 from app.services.notifications import notify
+from app.utils.security import email_verified_required
 from app.utils.time import utcnow_naive
 
 bp = Blueprint('messaging', __name__, url_prefix='/messages')
@@ -12,6 +13,7 @@ bp = Blueprint('messaging', __name__, url_prefix='/messages')
 
 @bp.get('/')
 @login_required
+@email_verified_required
 def index():
     sent_ids = {m.receiver_id for m in Message.query.filter_by(sender_id=current_user.id).all()}
     received_ids = {m.sender_id for m in Message.query.filter_by(receiver_id=current_user.id).all()}
@@ -22,6 +24,7 @@ def index():
 
 @bp.route('/<int:user_id>', methods=['GET', 'POST'])
 @login_required
+@email_verified_required
 @limiter.limit('60 per hour', methods=['POST'])
 def thread(user_id):
     other = db.session.get(User, user_id)

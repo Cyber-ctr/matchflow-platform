@@ -97,6 +97,9 @@ class TalentProfile(TimestampMixin, db.Model):
     cv_filename = db.Column(db.String(255))
     avatar_filename = db.Column(db.String(255))
     verification_status = db.Column(db.String(30), default='unverified', index=True)
+    verification_request_note = db.Column(db.String(1000))
+    verification_review_notes = db.Column(db.String(2000))
+    verification_requested_at = db.Column(db.DateTime)
     trust_score = db.Column(db.Integer, default=0)
     headline = db.Column(db.String(180))
 
@@ -122,6 +125,13 @@ class EmployerProfile(TimestampMixin, db.Model):
     website = db.Column(db.String(500))
     registration_number = db.Column(db.String(100))
     verified = db.Column(db.Boolean, default=False, nullable=False)
+    verification_status = db.Column(
+        db.String(30), nullable=False, default='unverified',
+        server_default='unverified',
+    )
+    verification_request_note = db.Column(db.String(1000))
+    verification_review_notes = db.Column(db.String(2000))
+    verification_requested_at = db.Column(db.DateTime)
     logo_filename = db.Column(db.String(255))
 
     user = db.relationship('User', back_populates='employer_profile')

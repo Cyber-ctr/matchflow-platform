@@ -4,9 +4,10 @@ from flask_login import current_user, login_required
 from sqlalchemy import select
 
 from app.extensions import db, limiter
-from app.models import Application, Apprenticeship, Job, Notification, Skill
+from app.models import Application, Apprenticeship, AuditLog, Job, Notification, Skill
 from app.services.notifications import notify
-from app.utils.security import role_required
+from app.utils.security import email_verified_required, role_required
+from app.utils.time import utcnow_naive
 
 bp = Blueprint('employer', __name__, url_prefix='/employer')
 
@@ -43,6 +44,7 @@ def profile():
 
 @bp.route('/jobs/new', methods=['GET', 'POST'])
 @login_required
+@email_verified_required
 @limiter.limit('20 per hour', methods=['POST'])
 @role_required('employer')
 def new_job():
@@ -82,6 +84,34 @@ def new_job():
     db.session.commit()
     flash('Opportunity published.', 'success')
     return redirect(url_for('employer.dashboard'))
+
+
+@bp.post('/verification/request')
+@login_required
+@email_verified_required
+@limiter.limit('3 per hour')
+@role_required('employer')
+def request_verification():
+    employer = current_user.employer_profile
+    if employer.verification_status == 'pending':
+        flash('Your business verification request is already being reviewed.', 'info')
+        return redirect(url_for('employer.profile'))
+    employer.verification_status = 'pending'
+    employer.verified = False
+    employer.verification_request_note = request.form.get(
+        'verification_note', '',
+    ).strip()[:1000] or None
+    employer.verification_review_notes = None
+    employer.verification_requested_at = utcnow_naive()
+    db.session.add(AuditLog(
+        actor_id=current_user.id,
+        action='employer_verification_requested',
+        entity_type='employer_profile',
+        entity_id=str(employer.id),
+    ))
+    db.session.commit()
+    flash('Your business verification request has been submitted for review.', 'success')
+    return redirect(url_for('employer.profile'))
 
 
 @bp.post('/jobs/<int:job_id>/close')

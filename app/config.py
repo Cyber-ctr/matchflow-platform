@@ -36,7 +36,11 @@ class Config:
     PREFERRED_URL_SCHEME = 'https'
     TRUSTED_HOSTS = [h.strip() for h in os.getenv('TRUSTED_HOSTS', '').split(',') if h.strip()] or None
     RATELIMIT_DEFAULT = '200 per day;50 per hour'
-    RATELIMIT_STORAGE_URI = os.getenv('RATELIMIT_STORAGE_URI', 'memory://')
+    RATELIMIT_STORAGE_URI = (
+        os.getenv('RATELIMIT_STORAGE_URI')
+        or os.getenv('REDIS_URL')
+        or 'memory://'
+    )
     APP_NAME = 'MatchFlow'
     CONTACT_EMAIL = os.getenv('CONTACT_EMAIL', 'hello@matchflow.cm')
     UPLOAD_FOLDER = str(BASE_DIR / 'instance' / 'uploads')

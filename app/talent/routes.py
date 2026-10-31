@@ -3,10 +3,10 @@ from flask_login import current_user, login_required
 from sqlalchemy import select
 
 from app.extensions import db, limiter
-from app.models import Application, Job, Notification, SavedJob, Skill
+from app.models import Application, AuditLog, Job, Notification, SavedJob, Skill
 from app.services.matching import recommended_jobs
 from app.services.notifications import notify
-from app.utils.security import role_required
+from app.utils.security import email_verified_required, role_required
 from app.utils.time import utcnow_naive
 
 bp = Blueprint('talent', __name__, url_prefix='/talent')
@@ -56,6 +56,7 @@ def profile():
 
 @bp.post('/jobs/<int:job_id>/apply')
 @login_required
+@email_verified_required
 @limiter.limit('20 per hour')
 @role_required('talent')
 def apply(job_id):
@@ -83,6 +84,33 @@ def apply(job_id):
     db.session.commit()
     flash('Application submitted successfully.', 'success')
     return redirect(url_for('talent.applications'))
+
+
+@bp.post('/verification/request')
+@login_required
+@email_verified_required
+@limiter.limit('3 per hour')
+@role_required('talent')
+def request_verification():
+    talent = current_user.talent_profile
+    if talent.verification_status == 'pending':
+        flash('Your verification request is already being reviewed.', 'info')
+        return redirect(url_for('talent.profile'))
+    talent.verification_status = 'pending'
+    talent.verification_request_note = request.form.get(
+        'verification_note', '',
+    ).strip()[:1000] or None
+    talent.verification_review_notes = None
+    talent.verification_requested_at = utcnow_naive()
+    db.session.add(AuditLog(
+        actor_id=current_user.id,
+        action='talent_verification_requested',
+        entity_type='talent_profile',
+        entity_id=str(talent.id),
+    ))
+    db.session.commit()
+    flash('Your verification request has been submitted for review.', 'success')
+    return redirect(url_for('talent.profile'))
 
 
 @bp.post('/jobs/<int:job_id>/save')

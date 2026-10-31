@@ -87,19 +87,20 @@ def register():
             return render_template('auth/register.html'), 400
         db.session.add(EmployerProfile(user_id=user.id, business_name=business))
     db.session.commit()
-    from app.auth.verify_routes import build_token
-    from app.services.email import send_email
+    from app.auth.verify_routes import send_verification_email
     from flask import current_app
-    verify_url = url_for('verify.verify', token=build_token(user.email), _external=True)
-    if send_email(user.email, 'Verify your MatchFlow email', f'Verify your MatchFlow account within 24 hours:\n\n{verify_url}'):
-        current_app.logger.info('Verification email sent')
+    if send_verification_email(user):
+        current_app.logger.info('Verification email sent for user_id=%s', user.id)
     else:
         if current_app.config.get('TESTING') or current_app.debug:
             current_app.logger.info('SMTP is not configured; verification email was not sent')
         else:
-            current_app.logger.warning('Verification email could not be delivered')
+            current_app.logger.warning(
+                'Verification email could not be delivered for user_id=%s',
+                user.id,
+            )
     login_user(user)
-    flash('Welcome to MatchFlow. Complete your profile to start matching.', 'success')
+    flash('Welcome to MatchFlow. Verify your email to apply, message, post jobs or use billing.', 'success')
     return redirect(url_for('dashboard'))
 
 
@@ -134,6 +135,9 @@ def delete_account():
         profile.linkedin_url = None
         profile.cv_filename = None
         profile.verification_status = 'unverified'
+        profile.verification_request_note = None
+        profile.verification_review_notes = None
+        profile.verification_requested_at = None
     if user.employer_profile:
         profile = user.employer_profile
         profile.business_name = 'Deleted MatchFlow Business'
@@ -143,6 +147,10 @@ def delete_account():
         profile.website = None
         profile.registration_number = None
         profile.verified = False
+        profile.verification_status = 'unverified'
+        profile.verification_request_note = None
+        profile.verification_review_notes = None
+        profile.verification_requested_at = None
     db.session.commit()
     logout_user()
     flash('Your MatchFlow account has been deactivated and personal profile data anonymised.', 'success')

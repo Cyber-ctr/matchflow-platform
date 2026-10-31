@@ -4,7 +4,7 @@ from flask_login import current_user, login_required
 from app.extensions import db
 from app.models import Payment
 from app.services.payments import PaymentService
-from app.utils.security import role_required
+from app.utils.security import email_verified_required, role_required
 
 bp = Blueprint('billing', __name__, url_prefix='/employer')
 
@@ -25,6 +25,7 @@ def billing():
 
 @bp.post('/billing/checkout')
 @login_required
+@email_verified_required
 @role_required('employer')
 def checkout():
     plan_key = request.form.get('plan')

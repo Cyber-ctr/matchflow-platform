@@ -59,6 +59,18 @@
       {% endfor %}
     {% endwith %}
   </div>
+  {% if current_user.is_authenticated and not current_user.is_email_verified and request.endpoint != 'verify.notice' %}
+  <div class="container">
+    <div class="alert-inline">
+      Verify your email before applying, messaging, posting opportunities or using billing.
+      <a href="{{ url_for('verify.notice') }}">Verification help</a>
+      <form method="post" action="{{ url_for('verify.resend') }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="nav-button" type="submit">Resend verification email</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
   {% block content %}{% endblock %}
 </main>
 <footer class="site-footer">

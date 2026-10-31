@@ -4,7 +4,7 @@ from flask_login import current_user, login_required
 from app.extensions import db
 from app.models import Job, Review, Skill, TalentProfile
 from app.services.matching import job_match_score
-from app.utils.security import role_required
+from app.utils.security import email_verified_required, role_required
 
 bp = Blueprint('employer_extra', __name__, url_prefix='/employer')
 
@@ -40,6 +40,7 @@ def talent_detail(profile_id):
 
 @bp.route('/jobs/<int:job_id>/edit', methods=['GET', 'POST'])
 @login_required
+@email_verified_required
 @role_required('employer')
 def edit_job(job_id):
     job = db.session.get(Job, job_id)

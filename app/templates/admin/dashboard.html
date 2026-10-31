@@ -30,15 +30,54 @@
               {% if user.id != current_user.id %}
               <form method="post" action="{{ url_for('admin.toggle_user', user_id=user.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-small">{{ 'Disable' if user.is_active else 'Enable' }}</button></form>
               {% endif %}
-              {% if user.talent_profile and user.talent_profile.verification_status != 'verified' %}
-              <form method="post" action="{{ url_for('admin.verify_talent', profile_id=user.talent_profile.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-small button-outline">Verify talent</button></form>
-              {% endif %}
-              {% if user.employer_profile and not user.employer_profile.verified %}
-              <form method="post" action="{{ url_for('admin.verify_employer', profile_id=user.employer_profile.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-small button-outline">Verify employer</button></form>
-              {% endif %}
             </td>
           </tr>
           {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+    <div class="section-heading"><div><p class="kicker">IDENTITY & BUSINESS</p><h2>Verification requests</h2></div><p>Review profile information and the applicant's context. Do not request or store identity documents here.</p></div>
+    <div class="table-card">
+      <table>
+        <thead><tr><th>Applicant</th><th>Type</th><th>Request context</th><th>Review</th></tr></thead>
+        <tbody>
+          {% for profile in pending_talents %}
+          <tr>
+            <td><strong>{{ profile.full_name }}</strong><small>{{ profile.user.email }}</small></td>
+            <td>Talent identity</td>
+            <td>{{ profile.verification_request_note or 'No context provided' }}</td>
+            <td>
+              <form method="post" action="{{ url_for('admin.verify_talent', profile_id=profile.id) }}" class="form-stack">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <select name="status" required><option value="">Choose decision</option><option value="verified">Approve</option><option value="rejected">Reject</option></select>
+                <textarea name="review_notes" maxlength="2000" rows="3" required aria-label="Talent verification rationale" placeholder="Record the review rationale."></textarea>
+                <button class="button button-small">Save decision</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+          {% for profile in pending_employers %}
+          <tr>
+            <td><strong>{{ profile.business_name }}</strong><small>{{ profile.user.email }}</small></td>
+            <td>Business</td>
+            <td>{{ profile.verification_request_note or 'No context provided' }}</td>
+            <td>
+              <form method="post" action="{{ url_for('admin.verify_employer', profile_id=profile.id) }}" class="form-stack">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <select name="status" required><option value="">Choose decision</option><option value="verified">Approve</option><option value="rejected">Reject</option></select>
+                <textarea name="review_notes" maxlength="2000" rows="3" required aria-label="Business verification rationale" placeholder="Record the review rationale."></textarea>
+                <button class="button button-small">Save decision</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not pending_talents and not pending_employers %}
+          <tr><td colspan="4">No verification requests are pending.</td></tr>
+          {% endif %}
         </tbody>
       </table>
     </div>

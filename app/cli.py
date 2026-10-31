@@ -51,6 +51,11 @@ def register_commands(app):
                         f'ALTER TABLE {table_name} ADD COLUMN {column_ddl}'
                     )
                     added_columns.append(f'{table.name}.{column.name}')
+            if 'employer_profiles' in existing_tables:
+                connection.exec_driver_sql(
+                    "UPDATE employer_profiles SET verification_status = 'verified' "
+                    "WHERE verified = TRUE AND verification_status = 'unverified'"
+                )
         if unsafe_columns:
             raise click.ClickException(
                 'Existing database is missing required columns that cannot be '
@@ -96,9 +101,17 @@ def register_commands(app):
             click.echo('Demo data already exists.')
             return
         skills = {s.name: s for s in Skill.query.all()}
-        talent_user = User(email='demo.talent@matchflow.local', role='talent')
+        talent_user = User(
+            email='demo.talent@matchflow.local',
+            role='talent',
+            is_email_verified=True,
+        )
         talent_user.set_password('DemoTalent@123')
-        employer_user = User(email='demo.sme@matchflow.local', role='employer')
+        employer_user = User(
+            email='demo.sme@matchflow.local',
+            role='employer',
+            is_email_verified=True,
+        )
         employer_user.set_password('DemoEmployer@123')
         db.session.add_all([talent_user, employer_user])
         db.session.flush()

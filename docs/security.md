@@ -22,7 +22,8 @@
 - Set `TRUSTED_HOSTS` for the real domain.
 - Use PostgreSQL with a least-privilege application user.
 - Configure Redis/Valkey for rate-limit state when horizontally scaling.
-- Add account email verification and recovery controls.
+- Configure SMTP and use signed, time-limited account email verification links. Unverified accounts cannot apply, message, post jobs, use billing, or request identity/business verification.
+- Align the generic manual identity/business verification workflow with applicable compliance requirements before requesting or storing sensitive evidence. The current workflow stores only the applicant's optional non-sensitive context and an administrator's review rationale; it does not collect documents.
 - Add abuse reporting, moderation and suspicious-login monitoring.
 - Add cloud object storage for uploaded documents; never store large user files on ephemeral Render/local disk.
 - Add automated database backups and verify restore procedures.
