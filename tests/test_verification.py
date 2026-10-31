@@ -56,8 +56,9 @@ def test_unverified_talent_cannot_apply_or_message(app, client):
         db.session.add(job)
         db.session.commit()
         job_id = job.id
+        talent_email = talent_user.email
 
-    login(client, talent_user.email)
+    login(client, talent_email)
     apply_response = client.post(f'/talent/jobs/{job_id}/apply')
     message_response = client.get('/messages/')
 
@@ -72,8 +73,9 @@ def test_unverified_talent_cannot_apply_or_message(app, client):
 def test_unverified_employer_cannot_post_or_checkout(app, client):
     with app.app_context():
         employer = create_user('employer', 'employer@example.com')
+        employer_email = employer.email
 
-    login(client, employer.email)
+    login(client, employer_email)
     post_response = client.get('/employer/jobs/new')
     checkout_response = client.post(
         '/employer/billing/checkout',
@@ -94,6 +96,7 @@ def test_talent_verification_request_is_reviewed_with_rationale(app, client):
         talent = create_user('talent', 'talent@example.com', verified=True)
         talent_id = talent.talent_profile.id
         admin = create_user('admin', 'admin@example.com', verified=True)
+        admin_email = admin.email
 
     login(client, 'talent@example.com')
     request_response = client.post(
@@ -107,7 +110,10 @@ def test_talent_verification_request_is_reviewed_with_rationale(app, client):
         assert profile.verification_request_note == 'My public profile is complete.'
 
     client.post('/auth/logout')
-    login(client, admin.email)
+    login(client, admin_email)
+    dashboard = client.get('/admin/')
+    assert dashboard.status_code == 200
+    assert b'My public profile is complete.' in dashboard.data
     review_response = client.post(
         f'/admin/talent/{talent_id}/verify',
         data={'status': 'rejected', 'review_notes': 'Please add more profile detail.'},
@@ -127,13 +133,15 @@ def test_employer_verification_request_can_be_approved(app, client):
         employer = create_user('employer', 'employer@example.com', verified=True)
         profile_id = employer.employer_profile.id
         admin = create_user('admin', 'admin@example.com', verified=True)
+        employer_email = employer.email
+        admin_email = admin.email
 
-    login(client, employer.email)
+    login(client, employer_email)
     request_response = client.post('/employer/verification/request')
     assert request_response.status_code == 302
 
     client.post('/auth/logout')
-    login(client, admin.email)
+    login(client, admin_email)
     review_response = client.post(
         f'/admin/employers/{profile_id}/verify',
         data={'status': 'verified', 'review_notes': 'Business profile reviewed.'},
